@@ -1,5 +1,6 @@
 class ArticlesController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+  
 
   def index
     articles = Article.all.includes(:user).order(created_at: :desc)
@@ -7,8 +8,14 @@ class ArticlesController < ApplicationController
   end
 
   def show
-    article = Article.find(params[:id])
-    render json: article
+    session[:pageviews_remaining] ||= 3
+    session[:pageviews_remaining] = session[:pageviews_remaining] - 1
+    if session[:pageviews_remaining] > 0 
+      article = Article.find(params[:id])
+      render json: article
+    else
+      render json: {error: "Maximum pageview limit reached"}, status: :unauthorized
+    end
   end
 
   private
